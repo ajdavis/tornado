@@ -53,10 +53,9 @@ except ImportError:
     from types import GeneratorType
 
 if sys.version_info >= (3, 5):
-    iscoroutine = inspect.iscoroutine
     iscoroutinefunction = inspect.iscoroutinefunction
 else:
-    iscoroutine = iscoroutinefunction = lambda f: False
+    iscoroutinefunction = lambda f: False
 
 # Tornado's own test suite requires the updated unittest module
 # (either py27+ or unittest2) so tornado.test.util enforces
@@ -130,7 +129,7 @@ class _TestMethodWrapper(object):
 
     def __call__(self, *args, **kwargs):
         result = self.orig_method(*args, **kwargs)
-        if isinstance(result, GeneratorType) or iscoroutine(result):
+        if isinstance(result, GeneratorType) or gen.isawaitable(result):
             raise TypeError("Generator and coroutine test methods should be"
                             " decorated with tornado.testing.gen_test")
         elif result is not None:
@@ -506,7 +505,7 @@ def gen_test(func=None, timeout=None):
         @functools.wraps(f)
         def pre_coroutine(self, *args, **kwargs):
             result = f(self, *args, **kwargs)
-            if isinstance(result, GeneratorType) or iscoroutine(result):
+            if isinstance(result, GeneratorType) or gen.isawaitable(result):
                 self._test_generator = result
             else:
                 self._test_generator = None
